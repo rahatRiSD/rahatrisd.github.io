@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Atlas - an AI company knowledge assistant. Upload company documents, ask questions, get answers with source references.">
+<meta name="author" content="rahatRiSD">
+<meta property="og:title" content="Atlas Knowledge Assistant">
+<meta property="og:description" content="Every answer, with its receipt. An AI knowledge assistant for offices and growing teams.">
+<meta property="og:type" content="website">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Atlas Knowledge Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+:root{
+  --stage:#06100E;
+  --stage-2:#0B1B18;
+  --mint:#3BE0A6;
+  --mint-deep:#12A579;
+  --amber:#F4A93F;
+  --violet:#8E7BF5;
+
+  --bg:#EEF1EF;
+  --surface:#FFFFFF;
+  --surface-2:#E4E9E6;
+  --ink:#0B1614;
+  --ink-2:#3C4A47;
+  --muted:#6B7A76;
+  --line:#CFD8D4;
+  --accent:#0E8A66;
+  --accent-soft:#D6F2E7;
+  --shadow:0 1px 2px rgba(11,22,20,.06),0 12px 32px rgba(11,22,20,.07);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A1412;
+    --surface:#10201D;
+    --surface-2:#162A26;
+    --ink:#E8F0ED;
+    --ink-2:#B6C6C1;
+    --muted:#8B9A95;
+    --line:#22342F;
+    --accent:#3BE0A6;
+    --accent-soft:#14312A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 16px 40px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A1412;
+  --surface:#10201D;
+  --surface-2:#162A26;
+  --ink:#E8F0ED;
+  --ink-2:#B6C6C1;
+  --muted:#8B9A95;
+  --line:#22342F;
+  --accent:#3BE0A6;
+  --accent-soft:#14312A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 16px 40px rgba(0,0,0,.35);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:"Sora","Sora Fallback",system-ui,sans-serif;text-wrap:balance;margin:0;line-height:1.1;letter-spacing:-.02em}
+p{margin:0}
+a{color:inherit}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);
+}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px}
+section{padding-block:clamp(56px,7vw,104px)}
+
+/* ---------- top bar ---------- */
+.nav{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+}
+.nav-in{display:flex;align-items:center;gap:20px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Sora",sans-serif;font-weight:700;letter-spacing:-.02em}
+.mark{width:26px;height:26px;flex:none}
+.nav-links{display:flex;gap:22px;margin-left:auto;font-size:14px;color:var(--ink-2)}
+.nav-links a{text-decoration:none}
+.nav-links a:hover{color:var(--accent)}
+@media(max-width:720px){.nav-links{display:none}}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;
+  font-family:"IBM Plex Sans",sans-serif;font-size:14px;font-weight:600;
+  padding:10px 18px;border-radius:999px;text-decoration:none;
+  background:var(--accent);color:#04100C;transition:transform .18s,box-shadow .18s;
+}
+:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#04100C}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(18,165,121,.35)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--accent);box-shadow:none}
+.btn.on-stage{background:rgba(255,255,255,.07);color:#EAF6F2;border:1px solid rgba(255,255,255,.18)}
+
+/* ---------- hero stage (single dark world, both themes) ---------- */
+.stage{position:relative;background:var(--stage);color:#E9F4F0;overflow:hidden;isolation:isolate}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+.stage::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 80% at 78% 40%,transparent 30%,rgba(6,16,14,.82) 78%),
+             linear-gradient(180deg,rgba(6,16,14,.55),transparent 34%,rgba(6,16,14,.9));
+}
+.stage-in{position:relative;z-index:2;padding-block:clamp(72px,11vw,132px)}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:48px;align-items:center}
+@media(max-width:900px){.hero{grid-template-columns:1fr;gap:34px}}
+.hero h1{font-size:clamp(38px,6.4vw,68px);font-weight:700;color:#F4FBF8}
+.hero h1 em{font-style:normal;color:var(--mint)}
+.hero p.lede{margin-top:20px;max-width:34em;color:#B9CEC8;font-size:clamp(16px,1.7vw,19px)}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px}
+.pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:34px}
+.pill{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;
+  padding:5px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+  color:#9FBDB5;background:rgba(255,255,255,.04);
+}
+.hero-anim{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.hero-anim.d2{animation-delay:.1s}.hero-anim.d3{animation-delay:.2s}.hero-anim.d4{animation-delay:.3s}
+@keyframes rise{from{transform:translate3d(0,14px,0);opacity:.001}to{transform:none;opacity:1}}
+
+/* drop panel — 3D floating document stack */
+.stack{perspective:1100px;display:flex;justify-content:center}
+.stack-in{transform-style:preserve-3d;transform:rotateX(14deg) rotateY(-20deg);width:100%;max-width:400px;position:relative;animation:float 9s ease-in-out infinite}
+@keyframes float{0%,100%{transform:rotateX(14deg) rotateY(-20deg) translateY(0)}50%{transform:rotateX(11deg) rotateY(-15deg) translateY(-14px)}}
+.doc{
+  background:linear-gradient(160deg,rgba(23,48,42,.94),rgba(10,26,23,.94));
+  border:1px solid rgba(59,224,166,.24);border-radius:14px;padding:16px 18px;
+  box-shadow:0 26px 60px rgba(0,0,0,.55);
+}
+.doc + .doc{margin-top:14px}
+.doc:nth-child(1){transform:translateZ(60px)}
+.doc:nth-child(2){transform:translateZ(28px)}
+.doc:nth-child(3){transform:translateZ(0)}
+.doc-h{display:flex;align-items:center;gap:9px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--mint)}
+.doc-b{height:6px;border-radius:3px;background:rgba(233,244,240,.16);margin-top:9px}
+.doc-b.s{width:62%}
+.doc-b.m{width:84%}
+
+/* ---------- marquee band ---------- */
+.band{border-block:1px solid var(--line);background:var(--surface);overflow:hidden;padding-block:14px}
+.band-track{display:flex;gap:44px;width:max-content;animation:slide 32s linear infinite;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- console ---------- */
+.sec-head{max-width:46ch;display:flex;flex-direction:column;gap:14px;margin-bottom:38px}
+.sec-head h2{font-size:clamp(26px,3.6vw,40px)}
+.sec-head p{color:var(--muted)}
+.console{
+  display:grid;grid-template-columns:270px minmax(0,1fr);gap:0;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+@media(max-width:820px){.console{grid-template-columns:1fr}}
+.ask-list{border-right:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:6px;background:var(--surface-2)}
+@media(max-width:820px){.ask-list{border-right:0;border-bottom:1px solid var(--line)}}
+.ask{
+  text-align:left;font:inherit;font-size:13.5px;cursor:pointer;color:var(--ink-2);
+  background:transparent;border:1px solid transparent;border-radius:9px;padding:10px 12px;
+  transition:background .15s,color .15s;
+}
+.ask:hover{background:var(--surface);color:var(--ink)}
+.ask[aria-selected="true"]{background:var(--surface);color:var(--ink);border-color:var(--accent);font-weight:600}
+.answer{padding:24px;min-height:330px;display:flex;flex-direction:column;gap:14px}
+.q-line{display:flex;gap:10px;align-items:flex-start}
+.q-line .who{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;color:var(--muted);padding-top:4px;flex:none;width:44px}
+.q-text{font-weight:600}
+.a-text{color:var(--ink-2)}
+.cursor{display:inline-block;width:8px;height:1.05em;vertical-align:-2px;background:var(--accent);animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.sources{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.src{
+  display:inline-flex;align-items:center;gap:7px;font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);
+  background:var(--accent-soft);color:var(--ink);
+}
+.src b{font-weight:500;color:var(--muted)}
+.conf{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.meter{flex:1;max-width:180px;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);width:0;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+
+/* ---------- 3D tilt cards ---------- */
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media(max-width:900px){.grid3{grid-template-columns:1fr}}
+.tilt{perspective:900px}
+.tilt-in{
+  transform-style:preserve-3d;height:100%;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  padding:26px 24px;display:flex;flex-direction:column;gap:12px;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s;will-change:transform;
+}
+.tilt:hover .tilt-in{box-shadow:var(--shadow)}
+.tilt-in h3{font-size:19px}
+.tilt-in p{color:var(--muted);font-size:14.5px}
+.glyph{width:46px;height:46px;transform:translateZ(46px)}
+.tilt-in h3,.tilt-in p{transform:translateZ(22px)}
+.tag{margin-top:auto;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);transform:translateZ(18px)}
+
+/* ---------- offices ---------- */
+.offices{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:44px;align-items:center}
+@media(max-width:860px){.offices{grid-template-columns:1fr;gap:28px}}
+.otable{width:100%;border-collapse:collapse;font-size:14px}
+.otable th{text-align:left;font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.otable td{padding:12px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.otable td.n{text-align:right;color:var(--ink-2)}
+.otable tr:hover td{color:var(--ink)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:9px;vertical-align:1px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+.stat .v{font-family:"Sora",sans-serif;font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stat .k{font-size:12.5px;color:var(--muted);margin-top:2px}
+
+/* ---------- steps ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+@media(max-width:860px){.steps{grid-template-columns:1fr}}
+.step{padding-top:18px;border-top:2px solid var(--line);position:relative}
+.step:hover{border-top-color:var(--accent)}
+.step .num{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--accent);letter-spacing:.14em}
+.step h3{font-size:18px;margin-top:8px}
+.step p{color:var(--muted);font-size:14.5px;margin-top:8px}
+
+/* ---------- cta ---------- */
+.cta{background:var(--stage);color:#E9F4F0;border-radius:20px;padding:clamp(34px,5vw,56px);position:relative;overflow:hidden}
+.cta h2{font-size:clamp(26px,3.8vw,40px);color:#F4FBF8;max-width:16ch}
+.cta p{color:#A9C3BC;margin-top:14px;max-width:44ch}
+.orb{position:absolute;right:-70px;top:-70px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(59,224,166,.42),transparent 62%);filter:blur(4px);animation:pulse 7s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+
+footer{border-top:1px solid var(--line);padding-block:30px;color:var(--muted);font-size:13px}
+.foot-in{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between}
+.sig{display:flex;flex-direction:column;gap:2px}
+.sig .by{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sig .name{
+  font-family:"Caveat",ui-rounded,cursive;font-size:34px;line-height:1;color:var(--ink);
+  display:inline-flex;align-items:baseline;gap:2px;
+}
+.sig .name .u{position:relative}
+.sig .name .u::after{
+  content:"";position:absolute;left:0;right:0;bottom:-5px;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--accent),transparent);
+  transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.2,1);
+}
+footer:hover .sig .name .u::after{transform:scaleX(1)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+</style>
+
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-in">
+    <span class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".28"/>
+        <circle cx="16" cy="16" r="4.4" fill="#12A579"/>
+        <circle cx="26" cy="11" r="2.6" fill="#F4A93F"/>
+        <circle cx="7" cy="21" r="2.6" fill="#8E7BF5"/>
+        <circle cx="14" cy="4.5" r="2.2" fill="#3BE0A6"/>
+        <path d="M16 16 L26 11 M16 16 L7 21 M16 16 L14 4.5" stroke="currentColor" stroke-width="1.1" opacity=".45"/>
+      </svg>
+      Atlas
+    </span>
+    <nav class="nav-links">
+      <a href="#ask">Ask</a>
+      <a href="#how">How it works</a>
+      <a href="#capabilities">Capabilities</a>
+      <a href="#offices">Offices</a>
+    </nav>
+    <a class="btn" href="#ask">Ask a question</a>
+  </div>
+</header>
+
+<div class="stage">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <div class="wrap stage-in">
+    <div class="hero">
+      <div>
+        <p class="eyebrow hero-anim">AI Company Knowledge Assistant</p>
+        <h1 class="hero-anim d2" style="margin-top:16px">Every answer,<br><em>with its receipt.</em></h1>
+        <p class="lede hero-anim d3">Upload the handbooks, contracts, decks and wiki pages your teams already write. Atlas reads them, links what belongs together, and answers in plain language — always naming the document, page and revision it came from.</p>
+        <div class="hero-cta hero-anim d4">
+          <a class="btn" href="#ask">Try a question</a>
+          <a class="btn on-stage" href="#how">See how it works</a>
+        </div>
+        <div class="pill-row hero-anim d4">
+          <span class="pill">PDF · DOCX · PPTX · MD</span>
+          <span class="pill">SSO + per-folder permissions</span>
+          <span class="pill">No training on your data</span>
+        </div>
+      </div>
+      <div class="stack hero-anim d3" aria-hidden="true">
+        <div class="stack-in">
+          <div class="doc">
+            <div class="doc-h"><span>◆</span> Employee_Handbook_v7.pdf</div>
+            <div class="doc-b m"></div><div class="doc-b s"></div>
+          </div>
+          <div class="doc">
+            <div class="doc-h"><span>◆</span> Dhaka_Office_Lease_2026.docx</div>
+            <div class="doc-b"></div><div class="doc-b m"></div>
+          </div>
+          <div class="doc">
+            <div class="doc-h"><span>◆</span> Onboarding_Checklist.md</div>
+            <div class="doc-b s"></div><div class="doc-b m"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="band" aria-hidden="true">
+  <div class="band-track" id="band"></div>
+</div>
+
+<section id="ask" class="wrap">
+  <div class="sec-head">
+    <span class="eyebrow">Live console</span>
+    <h2>Ask the way you'd ask a colleague.</h2>
+    <p>Pick one of the questions new hires actually send on their first week. Atlas answers from the indexed library and shows exactly where it read it.</p>
+  </div>
+
+  <div class="console">
+    <div class="ask-list" role="tablist" aria-label="Sample questions" id="asklist"></div>
+    <div class="answer">
+      <div class="q-line">
+        <span class="who">YOU</span>
+        <span class="q-text" id="qtext"></span>
+      </div>
+      <div class="q-line">
+        <span class="who" style="color:var(--accent)">ATLAS</span>
+        <span class="a-text" id="atext"></span>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:8px">Sources</p>
+        <div class="sources" id="srcs"></div>
+      </div>
+      <div class="conf">
+        <span>Retrieval confidence</span>
+        <span class="meter"><i id="meter"></i></span>
+        <span class="mono" id="confv">—</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how" class="wrap" style="padding-top:0">
+  <div class="sec-head">
+    <span class="eyebrow">Three passes over every file</span>
+    <h2>From a messy shared drive to a searchable memory.</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="num">PASS 01 — INGEST</div>
+      <h3>Read and split</h3>
+      <p>Files are parsed with layout intact — tables stay tables, slide notes stay attached to their slide — then split at semantic boundaries, not fixed character counts.</p>
+    </div>
+    <div class="step">
+      <div class="num">PASS 02 — LINK</div>
+      <h3>Connect the pieces</h3>
+      <p>Policy numbers, project codes and people are resolved across documents, so a lease clause and the office it describes end up on the same node.</p>
+    </div>
+    <div class="step">
+      <div class="num">PASS 03 — ANSWER</div>
+      <h3>Retrieve and cite</h3>
+      <p>A question pulls the passages that actually support the answer. If the library doesn't contain it, Atlas says so instead of guessing.</p>
+    </div>
+  </div>
+</section>
+
+<section id="capabilities" class="wrap" style="padding-top:0">
+  <div class="sec-head">
+    <span class="eyebrow">Capabilities</span>
+    <h2>Built for teams that keep rewriting the same answer.</h2>
+  </div>
+  <div class="grid3" id="cards"></div>
+</section>
+
+<section id="offices" class="wrap" style="padding-top:0">
+  <div class="offices">
+    <div>
+      <span class="eyebrow">Offices &amp; growing teams</span>
+      <h2 style="font-size:clamp(26px,3.6vw,38px);margin-top:14px">One library, scoped per office.</h2>
+      <p style="color:var(--muted);margin-top:14px;max-width:38ch">Each office keeps its own local documents — leases, payroll rules, holiday calendars — while shared policy stays global. People only ever retrieve what their role already allows.</p>
+      <div class="stats" style="margin-top:26px">
+        <div class="stat"><div class="v" data-count="48200">0</div><div class="k">Documents indexed</div></div>
+        <div class="stat"><div class="v" data-count="1340">0</div><div class="k">Questions answered this month</div></div>
+        <div class="stat"><div class="v" data-count="92" data-suffix="%">0</div><div class="k">Answered without escalation</div></div>
+        <div class="stat"><div class="v" data-count="11" data-suffix="s">0</div><div class="k">Median time to answer</div></div>
+      </div>
+    </div>
+    <div>
+      <table class="otable">
+        <thead><tr><th>Office</th><th style="text-align:right">People</th><th style="text-align:right">Docs</th><th style="text-align:right">Index</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot" style="background:#3BE0A6"></span>Dhaka</td><td class="n">214</td><td class="n">18,430</td><td class="n">Live</td></tr>
+          <tr><td><span class="dot" style="background:#3BE0A6"></span>Singapore</td><td class="n">96</td><td class="n">11,205</td><td class="n">Live</td></tr>
+          <tr><td><span class="dot" style="background:#3BE0A6"></span>Berlin</td><td class="n">73</td><td class="n">9,867</td><td class="n">Live</td></tr>
+          <tr><td><span class="dot" style="background:#F4A93F"></span>Austin</td><td class="n">41</td><td class="n">6,302</td><td class="n">Syncing</td></tr>
+          <tr><td><span class="dot" style="background:#8E7BF5"></span>São Paulo</td><td class="n">18</td><td class="n">2,396</td><td class="n">Onboarding</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" style="padding-top:0">
+  <div class="cta">
+    <div class="orb" aria-hidden="true"></div>
+    <h2>Point Atlas at one folder this week.</h2>
+    <p>Start with the documents your team gets asked about most. Indexing a thousand files takes about an hour, and the first answer comes back cited.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px">
+      <a class="btn" href="#ask">Ask a question</a>
+      <a class="btn on-stage" href="#how">Read the ingest spec</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <span class="sig">
+      <span class="by">Designed &amp; built by</span>
+      <span class="name"><span class="u">rahatRiSD</span></span>
+    </span>
+    <span style="display:flex;flex-direction:column;gap:4px;text-align:right">
+      <span>Atlas Knowledge Assistant — <a href="https://github.com/rahatRiSD" style="color:var(--accent);text-decoration:none">github.com/rahatRiSD</a></span>
+      <span class="mono">Index rebuilt nightly · 02:00 UTC</span>
+    </span>
+  </div>
+</footer>
+
+<script>
+/* ---------------- marquee ---------------- */
+(function(){
+  var items=["Employee handbook","Office leases","Security policy","Vendor contracts","Onboarding decks","Payroll rules","Incident reports","Travel policy","Meeting notes","Product specs","Holiday calendars","Design system"];
+  var track=document.getElementById('band'), html='';
+  for(var r=0;r<2;r++){ for(var i=0;i<items.length;i++){ html+='<span>'+items[i]+'</span>'; } }
+  track.innerHTML=html;
+})();
+
+/* ---------------- capability cards ---------------- */
+(function(){
+  var data=[
+    {t:"Cited answers",d:"Every claim carries the file name, page and revision it came from, so anyone can verify in one click.",tag:"Traceable",g:'<circle cx="23" cy="23" r="18" fill="none" stroke="#12A579" stroke-width="2"/><path d="M14 24l6 6 12-14" fill="none" stroke="#12A579" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'},
+    {t:"Permission-aware",d:"Retrieval respects the same folder access your drive already enforces. Nobody reads through Atlas what they can't open directly.",tag:"Scoped",g:'<rect x="10" y="20" width="26" height="18" rx="4" fill="none" stroke="#8E7BF5" stroke-width="2.4"/><path d="M16 20v-5a7 7 0 0114 0v5" fill="none" stroke="#8E7BF5" stroke-width="2.4"/><circle cx="23" cy="29" r="2.6" fill="#8E7BF5"/>'},
+    {t:"Knows when it doesn't know",d:"Below the confidence floor Atlas returns the closest documents and names the gap, instead of inventing a policy.",tag:"Honest",g:'<circle cx="23" cy="23" r="18" fill="none" stroke="#F4A93F" stroke-width="2"/><path d="M18 18a5 5 0 119 3c-1.6 1.5-2.5 2.4-2.5 4.4" fill="none" stroke="#F4A93F" stroke-width="2.6" stroke-linecap="round"/><circle cx="23.5" cy="31" r="1.8" fill="#F4A93F"/>'},
+    {t:"Version aware",d:"When handbook v6 and v7 disagree, the newer clause wins and the older one is shown as superseded.",tag:"Current",g:'<path d="M8 30h30" stroke="#12A579" stroke-width="2.2"/><rect x="11" y="9" width="14" height="14" rx="3" fill="none" stroke="#12A579" stroke-width="2.2"/><rect x="21" y="16" width="14" height="14" rx="3" fill="none" stroke="#3BE0A6" stroke-width="2.2"/>'},
+    {t:"Reads tables and slides",d:"Salary bands in a spreadsheet and a number buried on slide 14 are both retrievable, not flattened into noise.",tag:"Layout-aware",g:'<rect x="9" y="11" width="28" height="24" rx="3" fill="none" stroke="#8E7BF5" stroke-width="2.2"/><path d="M9 19h28M19 19v16M28 19v16" stroke="#8E7BF5" stroke-width="1.8"/>'},
+    {t:"Answers in your language",d:"Ask in Bangla, get the answer in Bangla — with the English source clause quoted underneath.",tag:"Multilingual",g:'<circle cx="23" cy="23" r="15" fill="none" stroke="#F4A93F" stroke-width="2.2"/><path d="M8 23h30M23 8c5 6 5 24 0 30M23 8c-5 6-5 24 0 30" fill="none" stroke="#F4A93F" stroke-width="1.8"/>'}
+  ];
+  var host=document.getElementById('cards'),h='';
+  data.forEach(function(c){
+    h+='<article class="tilt"><div class="tilt-in">'+
+       '<svg class="glyph" viewBox="0 0 46 46" aria-hidden="true">'+c.g+'</svg>'+
+       '<h3>'+c.t+'</h3><p>'+c.d+'</p><span class="tag">'+c.tag+'</span></div></article>';
+  });
+  host.innerHTML=h;
+
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce){
+    Array.prototype.forEach.call(host.querySelectorAll('.tilt'),function(card){
+      var inner=card.querySelector('.tilt-in');
+      card.addEventListener('mousemove',function(e){
+        var r=card.getBoundingClientRect();
+        var px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
+        inner.style.transform='rotateY('+(px*11)+'deg) rotateX('+(-py*11)+'deg) translateZ(8px)';
+      });
+      card.addEventListener('mouseleave',function(){ inner.style.transform=''; });
+    });
+  }
+})();
+
+/* ---------------- Q&A console ---------------- */
+(function(){
+  var QA=[
+    {q:"How many paid leave days do I get in my first year?",
+     a:"14 paid annual leave days, accruing 1.17 days per completed month, plus 10 public holidays set per office. Days unused at year end roll over once, capped at 7. Your first year is prorated from your join date, not from January.",
+     s:[["Employee_Handbook_v7.pdf","§4.2, p. 18"],["Dhaka_Holiday_Calendar_2026.xlsx","Sheet 1"]],c:96},
+    {q:"What's the notice period for the Dhaka office lease?",
+     a:"Six calendar months' written notice to the landlord, and the notice must be served before the 5th of the month to count for that month. Early termination inside the first 24 months triggers a two-month rent penalty.",
+     s:[["Dhaka_Office_Lease_2026.docx","Clause 11(b)"],["Finance_Commitments_Q3.pptx","Slide 9"]],c:91},
+    {q:"Who approves a vendor over $25,000?",
+     a:"Two signatures: the budget owner and the Finance Director. Above $100,000 it also needs a security review before the contract is signed. Renewals at the same value follow the same path — they are not treated as pre-approved.",
+     s:[["Procurement_Policy_v3.pdf","Table 2, p. 6"],["Security_Review_SOP.md","§1"]],c:89},
+    {q:"Can I expense a coworking day while travelling?",
+     a:"Yes, up to $35 per day when you're working from a city without an Atlas office, receipt attached within 30 days. It's not claimable in a city where we do have an office, including Dhaka, Singapore, Berlin and Austin.",
+     s:[["Travel_and_Expense_Policy.pdf","§7.4, p. 22"]],c:84},
+    {q:"What is our parental leave in Berlin?",
+     a:"I don't have a Berlin-specific parental leave document in the index. The global handbook sets a 16-week floor, but German statutory Elternzeit almost certainly supersedes it. The closest indexed file is the 2025 Berlin employment addendum, which stops at working hours.",
+     s:[["Employee_Handbook_v7.pdf","§5.1, p. 24"],["Berlin_Employment_Addendum_2025.docx","incomplete"]],c:38}
+  ];
+  var list=document.getElementById('asklist'),qt=document.getElementById('qtext'),at=document.getElementById('atext'),
+      sr=document.getElementById('srcs'),mt=document.getElementById('meter'),cv=document.getElementById('confv');
+  var timer=null, reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  QA.forEach(function(item,i){
+    var b=document.createElement('button');
+    b.className='ask'; b.type='button'; b.id='ask-'+i; b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', i===0?'true':'false');
+    b.textContent=item.q;
+    b.addEventListener('click',function(){ select(i); });
+    list.appendChild(b);
+  });
+
+  function select(i){
+    var item=QA[i];
+    Array.prototype.forEach.call(list.children,function(b,j){ b.setAttribute('aria-selected', j===i?'true':'false'); });
+    qt.textContent=item.q;
+    sr.innerHTML='';
+    mt.style.width='0%'; cv.textContent='—';
+    if(timer) clearInterval(timer);
+
+    if(reduce){ at.textContent=item.a; finish(item); return; }
+    at.innerHTML='<span class="cursor"></span>';
+    var n=0, step=Math.max(2,Math.round(item.a.length/110));
+    timer=setInterval(function(){
+      n=Math.min(item.a.length,n+step);
+      at.innerHTML=item.a.slice(0,n).replace(/&/g,'&amp;').replace(/</g,'&lt;')+(n<item.a.length?'<span class="cursor"></span>':'');
+      if(n>=item.a.length){ clearInterval(timer); timer=null; finish(item); }
+    },16);
+  }
+  function finish(item){
+    item.s.forEach(function(s,k){
+      var el=document.createElement('span');
+      el.className='src';
+      el.innerHTML='<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1h4l3 3v7H3z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>'+
+                   s[0]+' <b>'+s[1]+'</b>';
+      el.style.animation='rise .34s ease both'; el.style.animationDelay=(k*70)+'ms';
+      sr.appendChild(el);
+    });
+    mt.style.width=item.c+'%';
+    mt.style.background = item.c<55 ? '#F4A93F' : 'var(--accent)';
+    cv.textContent=item.c+'%'+(item.c<55?' — low, answer flagged':'');
+  }
+  select(0);
+})();
+
+/* ---------------- counters ---------------- */
+(function(){
+  var els=document.querySelectorAll('[data-count]');
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function fmt(n){ return n.toLocaleString('en-US'); }
+  Array.prototype.forEach.call(els,function(el){
+    var target=parseInt(el.getAttribute('data-count'),10), suf=el.getAttribute('data-suffix')||'';
+    if(reduce){ el.textContent=fmt(target)+suf; return; }
+    el.textContent='0'+suf;
+    var started=false;
+    var io=new IntersectionObserver(function(en){
+      if(en[0].isIntersecting && !started){
+        started=true;
+        var t0=performance.now(), dur=1100;
+        (function tick(t){
+          var p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+          el.textContent=fmt(Math.round(target*e))+suf;
+          if(p<1) requestAnimationFrame(tick);
+        })(t0);
+        io.disconnect();
+      }
+    },{threshold:.4});
+    io.observe(el);
+  });
+})();
+
+/* ---------------- WebGL knowledge graph ---------------- */
+(function(){
+  var canvas=document.getElementById('gl');
+  if(!window.THREE || !canvas) return;
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var stage=canvas.parentElement;
+
+  var renderer;
+  try{ renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true}); }
+  catch(e){ return; }
+  renderer.setClearColor(0x000000,0);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+
+  var scene=new THREE.Scene();
+  scene.fog=new THREE.FogExp2(0x06100E,0.055);
+  var camera=new THREE.PerspectiveCamera(52,1,0.1,200);
+  camera.position.set(0,0,26);
+
+  var group=new THREE.Group();
+  scene.add(group);
+
+  // --- nodes: documents scattered on a shell ---
+  var N=320, pos=new Float32Array(N*3), col=new Float32Array(N*3), sz=new Float32Array(N);
+  var palette=[new THREE.Color(0x3BE0A6),new THREE.Color(0x12A579),new THREE.Color(0xF4A93F),new THREE.Color(0x8E7BF5),new THREE.Color(0xDFF3EC)];
+  var pts=[];
+  for(var i=0;i<N;i++){
+    var u=Math.random(), v=Math.random();
+    var theta=2*Math.PI*u, phi=Math.acos(2*v-1);
+    var r=7.5+Math.random()*6.2;
+    var x=r*Math.sin(phi)*Math.cos(theta), y=r*Math.sin(phi)*Math.sin(theta)*0.72, z=r*Math.cos(phi);
+    pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z;
+    pts.push(new THREE.Vector3(x,y,z));
+    var c=palette[i%5===0?(2+(i%3)):(i%2)];
+    col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    sz[i]=(Math.random()*0.5+0.35);
+  }
+
+  // round sprite
+  var cv=document.createElement('canvas'); cv.width=cv.height=64;
+  var ctx=cv.getContext('2d');
+  var g=ctx.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(.35,'rgba(255,255,255,.75)'); g.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,64,64);
+  var sprite=new THREE.CanvasTexture(cv);
+
+  var ng=new THREE.BufferGeometry();
+  ng.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  ng.setAttribute('color',new THREE.BufferAttribute(col,3));
+  var nm=new THREE.PointsMaterial({size:0.62,map:sprite,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true});
+  group.add(new THREE.Points(ng,nm));
+
+  // --- edges: link near neighbours ---
+  var lp=[],lc=[],maxD=4.3,cap=520,count=0;
+  for(var a=0;a<N && count<cap;a++){
+    for(var b=a+1;b<N && count<cap;b++){
+      var d=pts[a].distanceTo(pts[b]);
+      if(d<maxD){
+        lp.push(pts[a].x,pts[a].y,pts[a].z,pts[b].x,pts[b].y,pts[b].z);
+        var al=1-(d/maxD);
+        lc.push(0.23*al+0.03,0.78*al+0.06,0.60*al+0.05, 0.23*al+0.03,0.78*al+0.06,0.60*al+0.05);
+        count++;
+      }
+    }
+  }
+  var lg=new THREE.BufferGeometry();
+  lg.setAttribute('position',new THREE.Float32BufferAttribute(lp,3));
+  lg.setAttribute('color',new THREE.Float32BufferAttribute(lc,3));
+  var lines=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:0.5,blending:THREE.AdditiveBlending,depthWrite:false}));
+  group.add(lines);
+
+  // --- core: the assistant ---
+  var core=new THREE.Mesh(
+    new THREE.IcosahedronGeometry(2.6,1),
+    new THREE.MeshBasicMaterial({color:0x3BE0A6,wireframe:true,transparent:true,opacity:0.55})
+  );
+  group.add(core);
+  var halo=new THREE.Mesh(
+    new THREE.SphereGeometry(1.5,24,24),
+    new THREE.MeshBasicMaterial({color:0x9BFFDC,transparent:true,opacity:0.16})
+  );
+  group.add(halo);
+
+  // --- travelling query pulses along random node paths ---
+  var pulseN=26, pp=new Float32Array(pulseN*3), pc=new Float32Array(pulseN*3);
+  var pulses=[];
+  for(var k=0;k<pulseN;k++){
+    pulses.push({t:Math.random(),sp:0.004+Math.random()*0.007,tgt:pts[Math.floor(Math.random()*N)]});
+    var pcl=k%3===0?new THREE.Color(0xF4A93F):new THREE.Color(0x7CFFD0);
+    pc[k*3]=pcl.r; pc[k*3+1]=pcl.g; pc[k*3+2]=pcl.b;
+  }
+  var pg=new THREE.BufferGeometry();
+  pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  pg.setAttribute('color',new THREE.BufferAttribute(pc,3));
+  group.add(new THREE.Points(pg,new THREE.PointsMaterial({size:0.95,map:sprite,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending})));
+
+  var mx=0,my=0,tx=0,ty=0;
+  window.addEventListener('mousemove',function(e){
+    tx=(e.clientX/window.innerWidth-.5); ty=(e.clientY/window.innerHeight-.5);
+  },{passive:true});
+
+  function resize(){
+    var w=stage.clientWidth,h=stage.clientHeight;
+    if(!w||!h) return;
+    renderer.setSize(w,h,false);
+    camera.aspect=w/h;
+    camera.position.z = w<700 ? 33 : 26;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize',resize);
+  resize();
+
+  var visible=true;
+  document.addEventListener('visibilitychange',function(){ visible=!document.hidden; });
+
+  var clock=new THREE.Clock();
+  function frame(){
+    requestAnimationFrame(frame);
+    if(!visible) return;
+    var t=clock.getElapsedTime();
+
+    if(!reduce){
+      group.rotation.y += 0.0016;
+      group.rotation.x = Math.sin(t*0.22)*0.09;
+      core.rotation.y -= 0.006; core.rotation.x += 0.004;
+      var s=1+Math.sin(t*1.7)*0.07; halo.scale.set(s,s,s);
+      nm.opacity = 0.85+Math.sin(t*2)*0.1;
+
+      for(var k=0;k<pulseN;k++){
+        var p=pulses[k]; p.t+=p.sp;
+        if(p.t>=1){ p.t=0; p.tgt=pts[Math.floor(Math.random()*N)]; }
+        var e=p.t<.5? 2*p.t*p.t : 1-Math.pow(-2*p.t+2,2)/2;
+        pp[k*3]=p.tgt.x*e; pp[k*3+1]=p.tgt.y*e; pp[k*3+2]=p.tgt.z*e;
+      }
+      pg.attributes.position.needsUpdate=true;
+    }
+
+    mx+=(tx-mx)*0.045; my+=(ty-my)*0.045;
+    camera.position.x = mx*7;
+    camera.position.y = -my*4.5;
+    camera.lookAt(0,0,0);
+
+    renderer.render(scene,camera);
+  }
+  frame();
+})();
+</script>
+
+</body>
+</html>
